@@ -1,11 +1,12 @@
 exports.allMessages = {
-    INVALID_CREDENTIALS: 'The password you entered is incorrect.',
+    INVALID_PASSWORD: 'The password you entered is incorrect.',
+    INVALID_CREDENTIALS:"Invalid email or password",
     LOGIN_SUCCESSFULLY: 'User credentials verified',
     NO_USER: 'No user found',
     INVALID_EMAIL: 'Invalid email',
     UNKNOWN_ERROR: "Unknown error occur",
     EMAIL_NOT_VERIFIED: 'Please verify your email before signin',
-    PASSWORD_VALIDATION: 'Password must contain atleast 4 letters',
+    PASSWORD_VALIDATION: 'Password must contain at least 4 letters',
     USER_CREATED: 'User __value__',
     DATABASE_CONN_ERR: 'Database connection error',
     DATABASE_ERR: 'Database error',
@@ -20,5 +21,10 @@ exports.allMessages = {
     USER_UPDATED_SUCCESSFULLY: 'User updated successfully',
     USER_CREATED_SUCCESSFULLY: 'User created successfully',
     USER_NOT_FOUND:'User not found!',
-    USER_DELETE_SUCCESSFULLY:'User delete successfully'
+    USER_NOT_ACTIVE:"User is inactive",
+    USER_DELETE_SUCCESSFULLY:'User delete successfully !',
+    ROLE_DELETE_SUCCESSFULLY:"Role deleted successfully !",
+    ENTER_VALID_DETAILS:"Please enter valid details",
+    ROLE_NOT_FOUND:"Role not found or module not present",
+    INVALID_ID_FORMATE:"Invalid ID format in filter"
 };

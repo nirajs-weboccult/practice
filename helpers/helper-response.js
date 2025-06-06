@@ -25,10 +25,8 @@ class HelperResponse {
      * @param  {object}  data
      * @return {object}
      */
-    setSession(req, key, data) {
-        req.session[key] = data.email;
-        req.session["user_id"] = data._id;
-        req.session["role"] = data.role;
+    setSession(req, key, value) {
+        req.session[key] = value;
     }
 
     /**

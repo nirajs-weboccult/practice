@@ -7,16 +7,12 @@ class RolesRoute {
     }
 
     setRoutes() {
-        
-        // Give me CRUD APIs for roles
-        this.router.get('/list', this.middleware.isAuthenticated, this.roleController.listRoles.bind(this.roleController));
-        this.router.post('/create', this.middleware.isAuthenticated, this.roleController.createRole.bind(this.roleController));
-        // this.router.put('/update/:id', this.middleware.isAuthenticated, this.roleController.updateRole.bind(this.roleController));
-        // this.router.delete('/delete/:id', this.middleware.isAuthenticated, this.roleController.deleteRole.bind(this.roleController));
-        // this.router.get('/view/:id', this.middleware.isAuthenticated, this.roleController.viewRole.bind(this.roleController));
-        // // Add is_active role API
-        // this.router.put('/activate/:id', this.middleware.isAuthenticated, this.roleController.activateRole.bind(this.roleController));
-        // this.router.put('/deactivate/:id', this.middleware.isAuthenticated, this.roleController.deactivateRole.bind(this.roleController));
+        this.router.get('/list', this.roleController.listRoles.bind(this.roleController));
+        this.router.post('/create', this.roleController.createRole.bind(this.roleController));
+        this.router.put('/update/:id',  this.roleController.updateRole.bind(this.roleController));
+        this.router.delete('/delete/:id',  this.roleController.deleteRole.bind(this.roleController));
+        this.router.put('/status-change/:id',  this.roleController.roleStatusChange.bind(this.roleController));
+        this.router.put('/remove-access-module/:id',  this.roleController.removeAccessModuleFromRole.bind(this.roleController));       
     }
 }
 

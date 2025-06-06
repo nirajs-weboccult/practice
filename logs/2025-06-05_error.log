@@ -1,6 +1,0 @@
-Error :Database connection error 
- The `uri` parameter to `openUri()` must be a string, got "undefined". Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnection()` is a string. 
- 
- TimeStamp : Thu Jun 05 2025 15:48:51 GMT+0530 (India Standard Time) 
- ============================== 
-

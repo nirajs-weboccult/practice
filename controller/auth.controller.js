@@ -1,107 +1,101 @@
-class AuthController {
+const baseController = require('./base.controller');
+const bcrypt = require('bcrypt');
+
+class AuthController extends baseController {
   constructor() {
-    this.validation = require('../validation/user.validation');
+    super()
+    this.validation = require('../validations/user.validations');
+    this.userService = require('../services/user.service')
+    this.validation = require('../validations/user.validations')
+    this.es6BindAll(this, []);
   }
 
   async login(req, res) {
     try {
-      const { username, password } = req.body;
-      const user = await this.authService.login(username, password);
-      res.status(200).json({ message: 'Login successful', user });
-    } catch (error) {
-      res.status(401).json({ message: error.message });
+      const { email, password } = req.body;
+      const { error } = this.validation.loginValidation.validate(req.body);
+      if (error) {
+        console.log(error);
+        return res.status(400).send({
+          status: false,
+          message: error.details?.[0]?.message || error.message,
+          type: 'ValidationError',
+        });
+      }
+      const user = await this.userService.getUserWithEmail(email)
+      const userData = user.data
+      
+      this.helperResponse.setSession(req, "user", userData);
+      const accessModule = await this.userService.getAccessModule(userData._id)
+      this.helperResponse.setSession(req, "access_module", accessModule);
+      if (user.status === false) {
+        return res.status(401).json({ status: false, message: this.messages.INVALID_CREDENTIALS});
+      }
+      const isMatch = await bcrypt.compare(password, userData.password);
+
+      if (!isMatch) {
+        return res.status(401).json({ status: false, message:this.messages.INVALID_PASSWORD });
+      }
+
+      if (userData.is_active === 0) {
+        return res.status(403).json({ status: false, message: this.messages.USER_NOT_ACTIVE });
+      }
+
+      const token = this.jwt.sign({ userId: userData._id }, this.config.commonConfig.SECRET_KEY, {
+        expiresIn: '24h'
+      });
+
+      return res.status(200).json({
+        status: true,
+        message: "Login successful",
+        token,
+        user: {
+          id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role_id?.name,
+          access_modules: userData.role_id?.access_module || []
+        }
+      });
+    } catch (err) {
+      console.error("Login error:", err);
+      return res.status(500).json({ status: false, message: this.messages.INTERNAL_SERVER_ERROR });
     }
   }
 
-  async logout(req, res) {
+  async signUp(req, res) {
     try {
-      await this.authService.logout(req.user);
-      res.status(200).json({ message: 'Logout successful' });
+      const { first_name, last_name, email, password, role_id, is_active , gender } = req.body;
+
+      const newUser = await this.userService.insertUser({ email, password, role_id, gender, is_active, first_name, last_name });
+      if(newUser.status==false){
+        return res.status(400).json({ status: false, message: newUser.message });
+      }
+      const userData = newUser.user
+      this.helperResponse.setSession(req, "user", userData);
+      const accessModule = await this.userService.getAccessModule(userData._id)
+      this.helperResponse.setSession(req, "access_module", accessModule);
+      const token = this.jwt.sign({ userId: userData._id }, this.config.commonConfig.SECRET_KEY, {
+        expiresIn: '24h'
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: 'Signup successful',
+        token,
+        user: {
+          id: userData._id,
+          name: userData.name,
+          email: userData.email
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Sign Up error:", error);
+      return res.status(500).json({
+        status: false,
+        message: this.messages.INTERNAL_SERVER_ERROR || 'Internal Server Error'
+      });
     }
   }
-
-
-  const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const User = require('../models/user.model'); // adjust path
-const config = require('../config');
-
-// async function signup(req, res) {
-//   try {
-//     const { name, email, password, role_id } = req.body;
-
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//       return res.status(409).json({ status: false, message: "Email already exists" });
-//     }
-
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     const newUser = await User.create({
-//       name,
-//       email,
-//       password: hashedPassword,
-//       role_id
-//     });
-
-//     return res.status(201).json({
-//       status: true,
-//       message: "Signup successful",
-//       user: {
-//         id: newUser._id,
-//         name: newUser.name,
-//         email: newUser.email
-//       }
-//     });
-
-//   } catch (err) {
-//     console.error("Signup error:", err);
-//     return res.status(500).json({ status: false, message: "Internal server error" });
-//   }
-// }
-
-// async function login(req, res) {
-//   try {
-//     const { email, password } = req.body;
-
-//     const user = await User.findOne({ email }).populate("role_id");
-//     if (!user) {
-//       return res.status(401).json({ status: false, message: "Invalid email or password" });
-//     }
-
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) {
-//       return res.status(401).json({ status: false, message: "Invalid email or password" });
-//     }
-
-//     if (user.is_active === 0) {
-//       return res.status(403).json({ status: false, message: "User is inactive" });
-//     }
-
-//     const token = jwt.sign({ userId: user._id }, config.JWT_SECRET, {
-//       expiresIn: config.JWT_EXPIRES_IN
-//     });
-
-//     return res.status(200).json({
-//       status: true,
-//       message: "Login successful",
-//       token,
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         role: user.role_id?.name,
-//         access_modules: user.role_id?.access_module || []
-//       }
-//     });
-
-//   } catch (err) {
-//     console.error("Login error:", err);
-//     return res.status(500).json({ status: false, message: "Internal server error" });
-//   }
-// }
-
-
 }
+module.exports = new AuthController();

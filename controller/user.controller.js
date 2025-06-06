@@ -8,7 +8,7 @@ class UserController extends baseController {
         this.es6BindAll(this, []);
     }
 
-    
+
     async listUsers(req, res) {
         try {
             const search = req.query.search?.trim() || '';
@@ -18,17 +18,14 @@ class UserController extends baseController {
             const sort = req.query.sort || 'createdAt';
             const order = req.query.order === 'asc' ? 'asc' : 'desc'; // default to 'desc' if invalid
 
-            // Fetch users and total count
             const [users, totalUsersData] = await Promise.all([
                 this.userService.getUsers(search, limit, offset, sort, order),
                 this.userService.countUsers(search)
             ]);
-            console.log(totalUsersData);
-            
+
             const totalUsers = totalUsersData.total || 0;
             const totalPages = Math.ceil(totalUsers / limit);
 
-            // Send paginated response
             return res.status(200).json({
                 status: true,
                 users,
@@ -38,14 +35,14 @@ class UserController extends baseController {
             });
         } catch (error) {
             console.error('Error fetching users:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+            return res.status(500).json({ message: this.messages.INTERNAL_SERVER_ERROR });
         }
     }
 
     async createUser(req, res) {
         try {
-            const { name, email, password, role_id , gender , is_active  } = req.body;
-            const {error} = this.validation.validateCreateUser.validate(req.body);
+            const { email, password, role_id, gender, is_active, first_name, last_name } = req.body;
+            const { error } = this.validation.validateCreateUser.validate(req.body);
             if (error) {
                 console.log(error);
                 return res.status(400).send({
@@ -54,26 +51,25 @@ class UserController extends baseController {
                     type: 'ValidationError',
                 });
             }
-            
-            
-            const newUser = await this.userService.insertUser({ name, email, password, role_id , gender , is_active });
-            console.log("newUser", newUser);
+
+
+            const newUser = await this.userService.insertUser({ email, password, role_id, gender, is_active, first_name, last_name });
             if (newUser.status === false) {
-                return res.status(400).json({ status: false, message: newUser.message});
+                return res.status(400).json({ status: false, message: newUser.message });
             }
             return res.status(201).json(newUser);
         } catch (error) {
             console.error('Error creating user:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+            return res.status(500).json({ message: this.messages.INTERNAL_SERVER_ERROR});
         }
     }
 
-    async updateUser(req,res){
+    async updateUser(req, res) {
         try {
             const userId = req.params.id;
             const updateData = req.body;
             // Check if user exists
-            const {error} = this.validation.validateUpdateUser.validate(req.body);
+            const { error } = this.validation.validateUpdateUser.validate(req.body);
             if (error) {
                 console.log(error);
                 return res.status(400).send({
@@ -83,14 +79,14 @@ class UserController extends baseController {
                 });
             }
             const existingUser = await this.userService.findUserById(userId)
-            if(!existingUser){
+            if (!existingUser) {
                 return res.status(400).json({
                     status: false,
                     message: this.messages.USER_NOT_FOUND
                 });
             }
-            const updatedUser = await this.userService.updateUserById(userId,updateData)
-            if(updatedUser.status===false){
+            const updatedUser = await this.userService.updateUserById(userId, updateData)
+            if (updatedUser.status === false) {
                 return res.status(200).json({
                     status: false,
                     message: this.messages.DATABASE_ERR
@@ -109,14 +105,12 @@ class UserController extends baseController {
         }
     }
 
-    async deleteUser(req,res){
-        try{
+    async deleteUser(req, res) {
+        try {
             const userId = req.params.id;
 
             const existingUser = await this.userService.findUserById(userId)
-            console.log(existingUser);
-            
-            if(!existingUser){
+            if (!existingUser) {
                 return res.status(400).json({
                     status: false,
                     message: this.messages.USER_NOT_FOUND
@@ -124,7 +118,7 @@ class UserController extends baseController {
             }
 
             const deleteUser = await this.userService.deleteUserById(userId)
-            if(deleteUser.status===false){
+            if (deleteUser.status === false) {
                 return res.status(200).json({
                     status: false,
                     message: this.messages.DATABASE_ERR
@@ -134,40 +128,31 @@ class UserController extends baseController {
                 status: true,
                 message: this.messages.USER_DELETE_SUCCESSFULLY
             });
-        }catch(error){
+        } catch (error) {
             console.error("Delete User error:", error);
             return res.status(500).json({
                 status: false,
-                message: this.messages.INTERNAL_SERVER_ERROR 
+                message: this.messages.INTERNAL_SERVER_ERROR
             });
         }
     }
 
-    async userStatusChange(req,res){
-        try{
+    async userStatusChange(req, res) {
+        try {
             const userId = req.params.id;
             const status = Number(req.body.is_active);
-            // Check if user exists
-            
-            if(!status&&status!=0&&status!=1&&status!=NaN){
+            if (!status && status != 0 && status != 1 && status != NaN) {
                 return res.status(400).json({
                     status: false,
-                    message: "Please enter valid details"
+                    message: this.messages.ENTER_VALID_DETAILS
                 });
             }
 
-            const existingUser = await this.userService.findUserById(userId)
-            if(!existingUser){
-                return res.status(400).json({
-                    status: false,
-                    message: this.messages.USER_NOT_FOUND
-                });
-            }
             const statusObj = {
-                is_active:status
+                is_active: status
             }
-            const updatedUser = await this.userService.updateUserById(userId,statusObj)
-            if(updatedUser.status===false){
+            const updatedUser = await this.userService.updateUserById(userId, statusObj)
+            if (updatedUser.status === false) {
                 return res.status(200).json({
                     status: false,
                     message: this.messages.DATABASE_ERR
@@ -177,54 +162,14 @@ class UserController extends baseController {
                 status: true,
                 message: this.messages.USER_UPDATED_SUCCESSFULLY
             });
-        }catch(error){
-             console.error("Change Status:", error);
-            return res.status(500).json({
-                status: false,
-                message: this.messages.INTERNAL_SERVER_ERROR 
-            });
-        }
-    }
-
-
-    async updateMultipleUsers(req, res) {
-        try {
-            const { filter = {}, update = {} } = req.body;
-
-            if (!update || Object.keys(update).length === 0) {
-                return res.status(400).json({
-                    status: false,
-                    message: "Update data is required"
-                });
-            }
-
-            const result = await this.userModel.updateMany(filter, { $set: update });
-
-            return res.status(200).json({
-                status: true,
-                message: `${result.modifiedCount} user(s) updated successfully`,
-                result
-            });
-
         } catch (error) {
-            console.error("Bulk update error:", error);
+            console.error("Change Status:", error);
             return res.status(500).json({
                 status: false,
-                message: this.messages.INTERNAL_SERVER_ERROR || "Something went wrong"
+                message: this.messages.INTERNAL_SERVER_ERROR
             });
         }
     }
-
-//     const bulkUpdateSchema = Joi.object({
-//   filter: Joi.object().default({}),
-//   update: Joi.object().min(1).required().error(new Error("At least one field to update is required"))
-// });
-
-// {
-//   "filter": { "role_id": "665e..." },
-//   "update": { "lastname": "ABC" }
-// }
-
 
     async updateManyUsersWithDifferentData(req, res) {
         try {
@@ -236,22 +181,34 @@ class UserController extends baseController {
                     message: "Updates should be a non-empty array"
                 });
             }
+            const bulkOps = [];
+            for (const user of updates) {
+                const updateData = { ...user.data };
+                if (updateData.email) {
+                    const existingUser = await this.userService.findUserWithEmail(updateData.email);
+                    if (existingUser.status == false) {
+                        return res.json({
+                            status: false,
+                            message: this.messages.USER_ALREADY_EXISTS
+                        })
+                    }
+                }
+                if (updateData.role_id) {
+                    updateData.role_id = this.mongoose.Types.ObjectId(updateData.role_id);
+                }
 
-            const bulkOps = updates.map(user => {
-                return {
+                bulkOps.push({
                     updateOne: {
                         filter: { _id: user.id },
-                        update: { $set: user.data }
+                        update: { $set: updateData }
                     }
-                };
-            });
+                });
+            }
 
-            const result = await this.userModel.bulkWrite(bulkOps);
-
+            let updatedData = await this.userService.userBulkWrite(bulkOps)
             return res.status(200).json({
                 status: true,
-                message: `${result.modifiedCount} user(s) updated successfully`,
-                result
+                message: `${updatedData.modifiedCount} user(s) updated successfully`
             });
 
         } catch (error) {
@@ -263,32 +220,87 @@ class UserController extends baseController {
         }
     }
 
-//     {
-//   "updates": [
-//     {
-//       "id": "665e1f029ab3fd23cc54e7c1",
-//       "data": {
-//         "firstName": "John"
-//       }
-//     },
-//     {
-//       "id": "665e1f029ab3fd23cc54e7c2",
-//       "data": {
-//         "email": "new.email@example.com",
-//         "access_modules": ["dashboard", "users"]
-//       }
-//     }
-//   ]
-// }
+    async updateMultipleUsers(req, res) {
+        try {
+            const { filter = {}, update = {} } = req.body;
 
-// const bulkUpdateDifferentSchema = Joi.object({
-//   updates: Joi.array().items(
-//     Joi.object({
-//       id: Joi.string().required(),
-//       data: Joi.object().min(1).required()
-//     })
-//   ).min(1).required()
-// });
+            const { error } = this.validation.bulkUpdateSchema.validate(req.body);
+            if (error) {
+                console.warn("Validation error:", error.details?.[0]?.message);
+                return res.status(400).json({
+                    status: false,
+                    message: error.details?.[0]?.message || "Invalid input",
+                    type: 'ValidationError',
+                });
+            }
+
+            if (!update || Object.keys(update).length === 0) {
+                return res.status(400).json({
+                    status: false,
+                    message: this.messages.ENTER_VALID_DETAILS
+                });
+            }
+
+            try {
+                if (filter.role_id) {
+                    filter.role_id = this.mongoose.Types.ObjectId(filter.role_id);
+                }
+                if (filter._id) {
+                    filter._id = this.mongoose.Types.ObjectId(filter._id);
+                }
+            } catch (convertErr) {
+                console.error("Invalid ObjectId in filter:", convertErr);
+                return res.status(400).json({
+                    status: false,
+                    message: this.messages.INVALID_ID_FORMATE
+                });
+            }
+
+            // Perform update
+            const result = await this.userService.updateManyUserWithFilter(filter, update);
+
+            return res.status(200).json({
+                status: true,
+                message: `${result.modifiedCount} user(s) updated successfully`
+            });
+
+        } catch (error) {
+            console.error("Bulk update error:", error);
+            return res.status(500).json({
+                status: false,
+                message: this.messages?.INTERNAL_SERVER_ERROR || "Something went wrong"
+            });
+        }
+    }
+
+    async checkModuleAccess(req,res){
+        try {
+            const { userId, moduleName } = req.params;
+
+            if (!userId || !moduleName) {
+                return res.status(400).json({
+                    status: false,
+                    message: "User ID and module name are required"
+                });
+            }            
+            const user = await this.userService.getAccessModule(userId)           
+            const hasAccess = user.includes(moduleName)
+            return res.status(200).json({
+                status: true,
+                hasAccess,
+                message: hasAccess
+                    ? `User has access to module '${moduleName}'`
+                    : `User does NOT have access to module '${moduleName}'`
+            });
+
+        } catch (error) {
+            console.error("Error checking module access:", error);
+            return res.status(500).json({
+                status: false,
+                message:this.messages.INTERNAL_SERVER_ERROR
+            });
+        }
+    }
 
 
 }

@@ -3,11 +3,8 @@ class RoleService  {
         this.bcrypt = require('bcrypt');
         this.mongoose = require('mongoose');
         this.roleModel = require('../models/role');
-        this.ErrorHandler = require('../helpers/error').ErrorHandler;
         this.messages = require('../helpers/messages').allMessages;
-        this.commonFunction = require('../helpers/common-function');
         this.helperResponse = require('../helpers/helper-response');
-        this.ErrorHandler = require('../helpers/error').ErrorHandler;
     }
 
     async getRoles(search, limit, offset, sort, order) {
@@ -28,7 +25,6 @@ class RoleService  {
     async countRoles(search){
 
         try{
-           // Build query with optional name search and filter for inactive users
             const query = {
                 ...(search ? { name: new RegExp(search, 'i') } : {}),
                 is_active: 1 // explicitly filtering only inactive users
@@ -51,7 +47,6 @@ class RoleService  {
         try {
             const existingRole = await this.roleModel.findOne({ name: roleData.name , is_active: 1 });
             if (existingRole) {
-                console.log("Role already exists");
                 return {
                     status: false,
                     message: this.messages.ROLE_ALREADY_EXISTS
@@ -85,6 +80,70 @@ class RoleService  {
             };
         }
     }   
+
+        async findRoleById(roleId){
+        try{
+            const roleData = await this.roleModel.findOne({_id:this.mongoose.Types.ObjectId(roleId),is_active:1})
+            return roleData
+        }catch(error){
+            console.log(error);
+            return {
+                status: false,
+                message: this.messages.INTERNAL_SERVER_ERROR
+            };
+        }
+    }
+
+    async updateRoleById(roleId,roleData){
+        try{
+            roleData["updatedAt"] = new Date()
+            const updateRole = await this.roleModel.findOneAndUpdate({_id:this.mongoose.Types.ObjectId(roleId)},{$set:roleData},{new: true})
+            return {
+                status:true,
+                data:updateRole
+            }
+        }catch(error){
+            console.log(error);
+            return {
+                status: false,
+                message: this.messages.INTERNAL_SERVER_ERROR
+            };
+        }
+    }
+
+     async deleteRoleById(roleId){
+        try{
+            const deleteRole = await this.roleModel.findOneAndDelete({_id:this.mongoose.Types.ObjectId(roleId)})
+            return {
+                status:true,
+                data:deleteRole
+            }
+        }catch(error){
+            console.log(error);
+            return {
+                status: false,
+                message: this.messages.INTERNAL_SERVER_ERROR
+            };
+        }
+    }
+
+    async removeAccessModule(roleId,module_name){
+        try{
+            const result = await this.roleModel.updateOne(
+                { _id: this.mongoose.Types.ObjectId(roleId) },
+                { $pull: { access_module: module_name } }
+            );
+            return result
+
+        }catch(error){
+            console.log(error);
+            return {
+                status: false,
+                message: this.messages.INTERNAL_SERVER_ERROR
+            };
+        }
+    }
+
 }
 
 module.exports = new RoleService();

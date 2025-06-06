@@ -8,20 +8,15 @@ class UsersRoute {
 
     setRoutes() {
         
-    //    give me CRUD APIs
-        this.router.get('/list', this.middleware.isAuthenticated, this.userController.listUsers.bind(this.userController));
-        this.router.post('/create', this.middleware.isAuthenticated, this.userController.createUser.bind(this.userController));
-        this.router.put('/update/:id', this.middleware.isAuthenticated, this.userController.updateUser.bind(this.userController));
-        this.router.delete('/delete/:id', this.middleware.isAuthenticated, this.userController.deleteUser.bind(this.userController));
-        this.router.put('/status-change/:id', this.middleware.isAuthenticated, this.userController.userStatusChange.bind(this.userController));
+        this.router.get('/list',  this.userController.listUsers.bind(this.userController));
+        this.router.post('/create', this.userController.createUser.bind(this.userController));
+        this.router.put('/update/:id', this.userController.updateUser.bind(this.userController));
+        this.router.delete('/delete/:id',  this.userController.deleteUser.bind(this.userController));
+        this.router.put('/status-change/:id', this.userController.userStatusChange.bind(this.userController));
+        this.router.put('/bulk-update/:id',  this.userController.updateManyUsersWithDifferentData.bind(this.userController));
+        this.router.put('/update-multiple/:id', this.userController.updateMultipleUsers.bind(this.userController));
+        this.router.get('/:userId/check-module-access/:moduleName', this.userController.checkModuleAccess.bind(this.userController));
 
-        // this.router.get('/view/:id', this.middleware.isAuthenticated, this.userController.viewUser.bind(this.userController));
-        // // add is_active user API
-        // this.router.put('/activate/:id', this.middleware.isAuthenticated, this.userController.activateUser.bind(this.userController));
-        // this.router.put('/deactivate/:id', this.middleware.isAuthenticated, this.userController.deactivateUser.bind(this.userController));
-        // // add forgot password API
-        // this.router.post('/reset-password', this.userController.resetPassword.bind(this.userController));
-        // add login API
     }
 }
 
